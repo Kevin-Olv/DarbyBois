@@ -79,8 +79,7 @@ int main(int argc, char *argv[]) {
         strcpy(bf_filename, filename);
         strcat(bf_filename, FILE_EXTENSION_bf);
     }
-    //strcpy(bf_filename, filename);
-    //strcat(bf_filename, FILE_EXTENSION_bf);
+
 
     FILE *file = fopen(filename, "rb");
     if (!file) {
@@ -124,7 +123,7 @@ int main(int argc, char *argv[]) {
         flip_bits(buffer, size);    //default bit flip
     }
 
-    //write flipped buffer to new file
+    //write buffer to new file
     file = fopen(bf_filename, "wb");
     if (fwrite(buffer, 1, size, file) != size) {
         printf("Error writing %s", bf_filename);
