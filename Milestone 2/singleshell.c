@@ -43,6 +43,12 @@ int main(int argc, char *argv[]){
     //printf("You entered: %s", input); //check for the right input 
     
     //printf("You entered: %s", myargs[0]); //check for the right input
+
+
+    char * myargs[2];
+    myargs[0] = strdup(theCopy);
+    myargs[1] = NULL;
+
     int rc = fork(); //create the fork
     if (rc < 0){
         // fork failed
@@ -53,21 +59,24 @@ int main(int argc, char *argv[]){
         //child process
         //printf("Child Process PID:%d \n", (int) getpid());
         //printf("Executing: %s", myargs[0]);
-        char * myargs[2];
+        
+        /*char * myargs[2];
         myargs[0] = strdup(theCopy);
-        myargs[1] = NULL;
+        myargs[1] = NULL;*/
 
         /*printf("pCopy: %s\n", theCopy);
         printf("Length: %lu\n", strlen(theCopy));*/
         
         if((execvp(myargs[0], myargs)) < 0){
             printf("exec failed: %s\n",strerror(errno));
+            g_bKeepLooking = 0;
         }
     }
     else {
         //parent process
         int wc = wait(NULL);
-        printf("Parent of %d, my pid: %d wc:%d \n", rc, (int) getpid(), wc);
+        g_bKeepLooking = 0;
+        printf("Execution Complete wc:%d \n", wc);
     }
      
      
