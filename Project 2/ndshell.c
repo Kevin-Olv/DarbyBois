@@ -77,6 +77,30 @@ int main(int argc, char * argv[]){
         //next case
         else if(strcmp(words[0],"start")==0){
             //here put the start function
+
+            //check for atleast 2 arguments to start func
+            if(nwords<2){
+                printf("Not enough arguments for start function\nmyshell> ");
+            }
+            //create the fork
+            pid_t pid = fork();
+
+            if(pid<0){
+                //Fork Failed
+                printf("Start failed: Failed forking child...\nmyshell> ");
+            }
+            else if(pid==0){
+                //Child Process
+
+                //Execvp call: If <0 then it failed so 
+                if(execvp(words[1],&words[1])<0){
+                    printf("Start: exec failed: %s\n",strerror(errno));
+                }
+            }
+            else if(pid > 0){
+                //Parent process
+                printf("Start: Process %d started\n",pid);
+            }
         }
         else if(strcmp(words[0],"wait")==0){
             //here put the wait function
