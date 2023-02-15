@@ -1,4 +1,4 @@
 help
-exit
 start ls -l
 start pwd
+exit
