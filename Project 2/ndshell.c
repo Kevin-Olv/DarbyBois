@@ -44,8 +44,48 @@ int main(int argc, char * argv[]){
     char * words[MAX_LENGTH];
     
     // char array to store input of max size
-    char * input[MAX_LENGTH];
+    char input[1024];
 
+    while(fgets(input,1024,stdin) != NULL){ //While Loop to keep running unless it gets an E.O.F or NULL
+
+        //Break input into seperate words
+        words[0] = strtok(input," \t\n");
+        for(int i=1; i < MAX_LENGTH; i++){
+            printf("%s\n",words[i-1]);
+            words[i] = strtok(0," \t\n");
+            //keep track of the number of arguments passed in
+            nwords=i;
+            //Break the Loop if Null is entered
+            if(words[i]==NULL){
+                break;
+            }
+        }
+
+        words[nwords] = 0;
+        //Begin Strcmp to see what the argument is 
+        if(strcmp(words[0],"exit")){
+            //here put the exit function
+        }
+        //next case
+        else if(strcmp(words[0],"start")){
+            //here put the start function
+        }
+        else if(strcmp(words[0],"wait")){
+            //here put the wait function
+        }
+        else if(strcmp(words[0],"waitfor")){
+            //here put the waitfor function
+        }
+        else if(strcmp(words[0],"run")){
+            //here put the run function (combine start + waitfor)
+        }
+        else{
+            printf("myshell> Unknown Command: %s\n", words[0]);
+            //insert the help function here
+        }
+        
+
+    }
 
 
 
