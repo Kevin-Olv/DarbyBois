@@ -56,7 +56,7 @@ int main(int argc, char * argv[]){
         //Break input into seperate words
         words[0] = strtok(input," \t\n");
         for(int i=1; i < MAX_LENGTH; i++){
-            printf("%s\n",words[i-1]);
+            //printf("%s\n",words[i-1]);
             words[i] = strtok(0," \t\n");
 
             //keep track of the number of arguments passed in
@@ -76,7 +76,7 @@ int main(int argc, char * argv[]){
         }
         //next case
         else if(strcmp(words[0],"start")==0){
-            //here put the start function
+            //here begins the start function
 
             //check for atleast 2 arguments to start func
             if(nwords<2){
@@ -99,23 +99,45 @@ int main(int argc, char * argv[]){
             }
             else if(pid > 0){
                 //Parent process
-                printf("Start: Process %d started\n",pid);
+                printf("ndshell: Process %d started\n",pid);
+                wait(NULL);
+                printf("ndshell> ");
             }
         }
         else if(strcmp(words[0],"wait")==0){
-            //here put the wait function
+            //here begins the wait function
+
+            pid_t pid;
+            int stat;
+            //By doing waitpid(-1) we wait for any Child process to finish
+            pid = waitpid(-1, &stat, 0);
+
+            if(WIFEXITED(stat)){
+                //WIFEXITED returns true if child exited normally
+                //WEXITSTATUS returns the exit status of the child
+                //WTERMSIG returns the signal number that caused child to terminate
+                //strsignal returns string of signal number passed into it
+                printf("Exit status: %d %s\nmyshell> ", WEXITSTATUS(stat),strsignal(WTERMSIG(stat)));
+                //Exit status: 0 is successful 
+
+            }
+            else if(WIFSIGNALED(stat)){
+                //WTERMSIG returns the signal number that caused child to terminate
+                //psignal displays a message on standard error describing the signal
+                psignal(WTERMSIG(stat),"Exit Signal");
+            }
         }
         else if(strcmp(words[0],"waitfor")==0){
-            //here put the waitfor function
+            //here begins the waitfor function
         }
         else if(strcmp(words[0],"run")==0){
-            //here put the run function (combine start + waitfor)
+            //here begins the run function (combine start + waitfor)
         }
         else if(strcmp(words[0],"kill")==0){
-            //here put the kill function
+            //here begins the kill function
         }
         else if(strcmp(words[0],"help")==0){
-            //here put the help function
+            //here begins the help function
             help();
         }
         else{
