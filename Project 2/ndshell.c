@@ -53,6 +53,7 @@ int main(int argc, char * argv[]){
         for(int i=1; i < MAX_LENGTH; i++){
             printf("%s\n",words[i-1]);
             words[i] = strtok(0," \t\n");
+
             //keep track of the number of arguments passed in
             nwords=i;
             //Break the Loop if Null is entered
@@ -65,6 +66,8 @@ int main(int argc, char * argv[]){
         //Begin Strcmp to see what the argument is 
         if(strcmp(words[0],"exit")){
             //here put the exit function
+            printf("Recieved Exit command\n");
+            break;
         }
         //next case
         else if(strcmp(words[0],"start")){
@@ -78,6 +81,12 @@ int main(int argc, char * argv[]){
         }
         else if(strcmp(words[0],"run")){
             //here put the run function (combine start + waitfor)
+        }
+        else if(strcmp(words[0],"kill")){
+            //here put the kill function
+        }
+        else if(strcmp(words[0],"help")){
+            //here put the help function
         }
         else{
             printf("myshell> Unknown Command: %s\n", words[0]);
