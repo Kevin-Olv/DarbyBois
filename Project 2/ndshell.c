@@ -20,6 +20,11 @@ void signalCapture(int nSigNum){
     }
 }
 
+//Help function
+void help(){
+    printf("Here is a list of commands: \nexit\nstart\nrun\nwait\nwaitfor\nkill\nmyshell> ");
+}
+
 int main(int argc, char * argv[]){
     
     // Signal Handler Code
@@ -64,33 +69,35 @@ int main(int argc, char * argv[]){
 
         words[nwords] = 0;
         //Begin Strcmp to see what the argument is 
-        if(strcmp(words[0],"exit")){
+        if(strcmp(words[0],"exit")==0){
             //here put the exit function
             printf("Recieved Exit command\n");
             break;
         }
         //next case
-        else if(strcmp(words[0],"start")){
+        else if(strcmp(words[0],"start")==0){
             //here put the start function
         }
-        else if(strcmp(words[0],"wait")){
+        else if(strcmp(words[0],"wait")==0){
             //here put the wait function
         }
-        else if(strcmp(words[0],"waitfor")){
+        else if(strcmp(words[0],"waitfor")==0){
             //here put the waitfor function
         }
-        else if(strcmp(words[0],"run")){
+        else if(strcmp(words[0],"run")==0){
             //here put the run function (combine start + waitfor)
         }
-        else if(strcmp(words[0],"kill")){
+        else if(strcmp(words[0],"kill")==0){
             //here put the kill function
         }
-        else if(strcmp(words[0],"help")){
+        else if(strcmp(words[0],"help")==0){
             //here put the help function
+            help();
         }
         else{
             printf("myshell> Unknown Command: %s\n", words[0]);
             //insert the help function here
+            help();
         }
         
 
