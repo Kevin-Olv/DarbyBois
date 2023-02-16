@@ -110,17 +110,16 @@ int main(int argc, char * argv[]){
             pid_t pid;
             int stat;
             //By doing waitpid(-1) we wait for any Child process to finish
-            pid = waitpid(-1, &stat, 0);
+            pid = waitpid(-1, &stat, WNOHANG);
 
             if(WIFEXITED(stat)){
                 //WIFEXITED returns true if child exited normally
                 //WEXITSTATUS returns the exit status of the child
-                //WTERMSIG returns the signal number that caused child to terminate
-                //strsignal returns string of signal number passed into it
-                printf("Exit status: %d %s\nmyshell> ", WEXITSTATUS(stat),strsignal(WTERMSIG(stat)));
+                printf("ndshell: process %d exited normally with status %d\nmyshell> ",pid,WEXITSTATUS(stat));
                 //Exit status: 0 is successful 
 
             }
+            //WIFSIGNALED returns true if terminated by a signal
             else if(WIFSIGNALED(stat)){
                 //WTERMSIG returns the signal number that caused child to terminate
                 //psignal displays a message on standard error describing the signal
@@ -129,9 +128,71 @@ int main(int argc, char * argv[]){
         }
         else if(strcmp(words[0],"waitfor")==0){
             //here begins the waitfor function
+
+            //Check to see if the right number of arguments are passed
+            if(nwords!=2){
+                printf("Incorrect number of arguments to waitfor\nmyshell> ");
+                continue;
+            }
+            
+            pid_t pid;
+            pid_t wpid;
+            //here we convert the pid inputted thats a string to an integer
+            wpid = atoi(words[1]);
+            int stat;
+            //wait pid makes system wait for a specific process we want
+            pid = waitpid(wpid, &stat, WNOHANG);
+
+            //If waitpid returns < 0 then an error occured 
+            if(pid < 0){
+                printf("Exit status: %d %s\nmyshell> ", WEXITSTATUS(stat),strsignal(WTERMSIG(stat)));
+            }
+            //WIFSIGNALED returns true if terminated by a signal
+            else if(WIFSIGNALED(stat)){
+                //WTERMSIG returns the signal number that caused child to terminate
+                //psignal displays a message on standard error describing the signal
+                psignal(WTERMSIG(stat),"Exit Signal");
+            }
+
         }
         else if(strcmp(words[0],"run")==0){
             //here begins the run function (combine start + waitfor)
+
+            //check for atleast 2 arguments to start func
+            if(nwords<2){
+                printf("Not enough arguments for start function\nmyshell> ");
+            }
+            //create the fork
+            pid_t pid = fork();
+
+            if(pid<0){
+                //Fork Failed
+                printf("Start failed: Failed forking child...\nmyshell> ");
+            }
+            else if(pid==0){
+                //Child Process
+
+                //Execvp call: If <0 then it failed so 
+                if(execvp(words[1],&words[1])<0){
+                    printf("Start: exec failed: %s\n",strerror(errno));
+                }
+            }
+            else if(pid > 0){
+                //Parent process
+                printf("ndshell: Process %d started\n",pid);
+                wait(NULL);
+                printf("ndshell> ");
+            }
+
+            int stat;
+            pid = waitpid(pid, &stat, 0);
+            if(pid < 0){
+                printf("Exit Status: %d %s\n",pid,strsignal(WTERMSIG(stat)));
+
+            }
+            else if(WIFSIGNALED(stat)){
+                psignal(WTERMSIG(stat),"Exit Signal");
+            }
         }
         else if(strcmp(words[0],"kill")==0){
             //here begins the kill function
