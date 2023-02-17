@@ -6,6 +6,7 @@
 #include <errno.h>
 #include <string.h>
 #include <signal.h>
+#include <ctype.h>
 
 #define MAX_LENGTH 100
 
@@ -223,10 +224,15 @@ int main(int argc, char * argv[]){
                 printf("Incorrect number of arguments to waitfor\nndshell> ");
                 continue;
             }
-            pid_t wpid;
+            if(isdigit(*words[1])) {
+                pid_t wpid;
 
-            wpid = atoi(words[1]);
-            waitfor_cmd(wpid);
+                wpid = atoi(words[1]);
+                waitfor_cmd(wpid);
+            }
+            else {
+                printf("Error: Bad PID Non-numeric value \nndshell> ");
+            }
 
         }
         else if(strcmp(words[0],"run")==0){ //here begins the run function (combine start + waitfor)
