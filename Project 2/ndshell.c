@@ -153,7 +153,7 @@ void start_cmd(char * words[]) {
     else if(pid > 0){
         //Parent process
         printf("ndshell: Process %d started\n", pid);
-        //wait(NULL);
+        sleep(1);
         printf("ndshell> ");
     }
 }
