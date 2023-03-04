@@ -79,6 +79,45 @@ void compute_image_singlethread ( struct FractalSettings * pSettings, struct bit
 	}
 }
 
+struct ThreadInfo {
+    struct FractalSettings *pSettings;
+    struct bitmap *pBitmap;
+    int startRow;
+    int endRow;
+};
+
+void* compute_image_multithreaded(void* arg) {
+	struct ThreadInfo* pInfo = (struct ThreadInfo*) arg;
+	struct FractalSettings* pSettings = pInfo->pSettings;
+	struct bitmap* pBitmap = pInfo->pBitmap;
+	int startRow = pInfo->startRow;
+	int endRow = pInfo->endRow;
+
+	// For every pixel i,j, in the image...
+	for (int j = startRow; j < endRow; j++) {
+		for (int i = 0; i < pSettings->nPixelWidth; i++) {
+
+			// Scale from pixels i,j to coordinates x,y
+			double x = pSettings->fMinX + i*(pSettings->fMaxX - pSettings->fMinX) / pSettings->nPixelWidth;
+			double y = pSettings->fMinY + j*(pSettings->fMaxY - pSettings->fMinY) / pSettings->nPixelHeight;
+
+			// Compute the iterations at x,y
+			int iter = compute_point(x, y, pSettings->nMaxIter);
+
+			// Convert a iteration number to an RGB color.
+			// (Change this bit to get more interesting colors.)
+			int gray = 255 * iter / pSettings->nMaxIter;
+
+			// Set the pixel in the bitmap.
+			bitmap_set(pBitmap, i, j, gray);
+		}
+	}
+
+	pthread_exit(NULL);
+}
+
+
+
 /* Process all of the arguments as provided as an input and appropriately modify the
    settings for the project 
    @returns 1 if successful, 0 if unsuccessful (bad arguments) */
@@ -90,6 +129,21 @@ char processArguments (int argc, char * argv[], struct FractalSettings * pSettin
 
 
 
+void displayHelp()
+{
+    printf("Usage: fractal [options]\n");
+    printf("Options:\n");
+    printf("  -help              Display this information\n");
+    printf("  -xmin X            New value for x min\n");
+    printf("  -xmax X            New value for x max\n");
+    printf("  -ymin Y            New value for y min\n");
+    printf("  -ymax Y            New value for y max\n");
+    printf("  -maxiter N         New value for the maximum number of iterations (must be an integer)\n");
+    printf("  -width W           New width for the output image\n");
+    printf("  -height H          New height for the output image\n");
+    printf("  -output F          New name for the output file\n");
+    printf("  -threads N         Number of threads to use for processing (default is 1)\n");
+}
 
 int main( int argc, char *argv[] )
 {
@@ -110,22 +164,8 @@ int main( int argc, char *argv[] )
     
     strncpy(theSettings.szOutfile, DEFAULT_OUTPUT_FILE, MAX_OUTFILE_NAME_LEN);
 
-    /* TODO: Adapt your code to use arguments where the arguments can be used to override 
-             the default values 
-
-        -help         Display the help information
-        -xmin X       New value for x min
-        -xmax X       New value for x max
-        -ymin Y       New value for y min
-        -ymax Y       New value for y max
-        -maxiter N    New value for the maximum number of iterations (must be an integer)     
-        -width W      New width for the output image
-        -height H     New height for the output image
-        -output F     New name for the output file
-        -threads N    Number of threads to use for processing (default is 1) 
-        -row          Run using a row-based approach        
-        -task         Run using a thread-based approach
-
+    /* 
+        TODO:
         Support for setting the number of threads is optional
 
         You may also appropriately apply reasonable minimum / maximum values (e.g. minimum image width, etc.)
@@ -134,7 +174,37 @@ int main( int argc, char *argv[] )
 
    /* Are there any locks to set up? */
 
-
+    // Parse arguments
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "-help") == 0) { //Display help
+            displayHelp();
+            return 0;
+        } else if (strcmp(argv[i], "-xmin") == 0) { //New value for x min
+            theSettings.fMinX = atof(argv[++i]);
+        } else if (strcmp(argv[i], "-xmax") == 0) { //New value for x max
+            theSettings.fMaxX = atof(argv[++i]);
+        } else if (strcmp(argv[i], "-ymin") == 0) { //New value for y min
+            theSettings.fMinY = atof(argv[++i]);
+        } else if (strcmp(argv[i], "-ymax") == 0) { //New value for y max
+            theSettings.fMaxY = atof(argv[++i]);
+        } else if (strcmp(argv[i], "-maxiter") == 0) { // New value for the maximum number of iterations (must be an integer) 
+            theSettings.nMaxIter = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-width") == 0) { //New width for the output image
+            theSettings.nPixelWidth = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-height") == 0) { //New height for the output image
+            theSettings.nPixelHeight = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-output") == 0) { //New name for the output file
+            strncpy(theSettings.szOutfile, argv[++i], MAX_OUTFILE_NAME_LEN);
+        } else if (strcmp(argv[i], "-threads") == 0) { //Number of threads to use for processing (default is 1)
+            theSettings.nThreads = atoi(argv[++i]);
+        } else if (strcmp(argv[i], "-row") == 0) { //Run using a row-based approach
+            theSettings.theMode = MODE_THREAD_ROW;
+        } else if (strcmp(argv[i], "-task") == 0) { //Run using a thread-based approach
+            theSettings.theMode = MODE_THREAD_TASK;
+        } else {
+            printf("Unknown argument: %s, use -help for more information\n", argv[i]);
+        }
+    }
    if(processArguments(argc, argv, &theSettings))
    {
         /* Dispatch here based on what mode we might be in */
@@ -161,6 +231,40 @@ int main( int argc, char *argv[] )
 
             /* Could you send an argument and write a different version of compute_image that works off of a
                certain parameter setting for the rows to iterate upon? */
+               /* Create a bitmap of the appropriate size */
+            struct bitmap * pBitmap = bitmap_create(theSettings.nPixelWidth, theSettings.nPixelHeight);
+
+            /* Fill the bitmap with dark blue */
+            bitmap_reset(pBitmap,MAKE_RGBA(0,0,255,0));
+
+            /* Compute the image */
+            int numThreads = atoi(argv[2]);
+            int rowsPerThread = (int) ceil((double) theSettings.nPixelHeight / numThreads);
+
+            pthread_t threads[numThreads];
+            struct ThreadInfo threadInfo[numThreads];
+
+            for (int i = 0; i < numThreads; i++) {
+                threadInfo[i].pSettings = &theSettings;
+                threadInfo[i].pBitmap = pBitmap;
+                threadInfo[i].startRow = i * rowsPerThread;
+                threadInfo[i].endRow = (i + 1) * rowsPerThread;
+                if (i == numThreads - 1) {
+                    threadInfo[i].endRow = theSettings.nPixelHeight;
+                }
+
+                pthread_create(&threads[i], NULL, compute_image_multithreaded, (void*) &threadInfo[i]);
+            }
+
+            for (int i = 0; i < numThreads; i++) {
+                pthread_join(threads[i], NULL);
+            }
+
+            // Save the image in the stated file.
+            if(!bitmap_save(pBitmap,theSettings.szOutfile)) {
+                fprintf(stderr,"fractal: couldn't write to %s: %s\n",theSettings.szOutfile,strerror(errno));
+                return 1;
+            } 
         }
         else if(theSettings.theMode == MODE_THREAD_TASK)
         {
